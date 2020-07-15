@@ -39,7 +39,7 @@
   },
   "minimum-stability": "dev",
   "require": {
-    "guzzlehttp/guzzle": "dev-master",
+    "guzzlehttp/guzzle": "6.5.4",
     "ext-json": "*"
   },
   "require-dev": {
