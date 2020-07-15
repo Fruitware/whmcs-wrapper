@@ -1,0 +1,40 @@
+{
+  "name": "fruitware/whmcs-wrapper",
+  "description": "WHMCS API PHP-Wrapper bundled as a composer package",
+  "type": "library",
+  "license": "LGPL-2.1-or-later",
+  "keywords": [
+    "php",
+    "api-wrapper",
+    "whmcs-api",
+    "whmcs",
+    "packagist",
+    "composer",
+    "lgplv2",
+    "opensource",
+    "library"
+  ],
+  "homepage": "https://github.com/Fruitware/whmcs-wrapper",
+  "authors": [
+    {
+      "name": "Fruits Foundation",
+      "email": "foundation@fruits.agency",
+      "role": "Maintainer",
+      "homepage": "https://fruits.foundation"
+    },
+    {
+      "name": "Serge Beresnev",
+      "email": "serge@fruitware.ru",
+      "role": "Developer",
+      "homepage": "https://fruits.foundation"
+    }
+  ],
+  "support": {
+    "email": "support@fruits.foundation"
+  },
+  "minimum-stability": "dev",
+  "require": {
+    "guzzle/guzzle": "3.9.x-dev",
+    "guzzlehttp/guzzle": "7.1.x-dev"
+  }
+}
