@@ -32,9 +32,17 @@
   "support": {
     "email": "support@fruits.foundation"
   },
+  "autoload": {
+    "psr-4": {
+      "Fruitware\\WhmcsWrapper\\": "src/"
+    }
+  },
   "minimum-stability": "dev",
   "require": {
-    "guzzle/guzzle": "3.9.x-dev",
-    "guzzlehttp/guzzle": "7.1.x-dev"
+    "guzzlehttp/guzzle": "dev-master",
+    "ext-json": "*"
+  },
+  "require-dev": {
+    "php-ds/php-ds": "dev-master"
   }
 }
