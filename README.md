@@ -40,3 +40,5 @@ This project is [LGPL--2.1--or--later](https://github.com/Fruitware/whmcs-wrappe
 
 ***
 _This README was generated with ❤️ by [readme-md-generator](https://github.com/kefranabg/readme-md-generator)_
+
+![PHP Composer](https://github.com/Fruitware/whmcs-wrapper/workflows/PHP%20Composer/badge.svg?branch=master)
