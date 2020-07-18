@@ -3,131 +3,41 @@
 namespace Fruitware\WhmcsWrapper\Connect;
 
 use Exception;
-use Fruitware\WhmcsWrapper\Config\ConfigInterface;
-use Fruitware\WhmcsWrapper\Exception\RuntimeException;
-use GuzzleHttp\Client;
-use GuzzleHttp\Promise\AggregateException;
+use Fruitware\WhmcsWrapper\{Config\ConfigInterface, Exception\RuntimeException};
+use GuzzleHttp\{Client, ClientInterface, Promise\AggregateException};
+use function json_decode;
 
 /**
- * @todo: morph connector into the
- *
  * Class Connector
  *
  * @package Fruitware\WhmcsWrapper
+ * @author   Fruits Foundation <foundation@fruits.agency>
  */
 final class Connector
 {
     /**
      * WHMCS API wrapper
-     *
-     * @example https://github.com/PeteBishwhip/WHMCSAPI
+     * @var ClientInterface|null
      */
-    private ?Client $client;
-
-    protected string $whmcsUri;
-    protected string $whmcsIdentifier;
-    protected string $whmcsSecret;
-
-    /** @var array http-client options */
-    protected array $requestOptions;
+    protected ?ClientInterface $client = null;
 
     /**
-     * @var array params automatically used for each api-call
+     * @var ConfigInterface|null
      */
-    protected array $defaultParams;
+    protected ?ConfigInterface $config;
 
-    /** @var string Request url (path) for any api call */
-    protected string $requestUrl;
-
-    /**
-     * Protected constructor
-     * Doesn't supposed to be called directly
-     *
-     * @param  ConfigInterface  $config
-     */
     protected function __construct(ConfigInterface $config)
     {
-        $this->whmcsUri = $config->getBaseUri();
-        $this->whmcsIdentifier = $config->getAuthIdentifier();
-        $this->whmcsSecret = $config->getAuthSecret();
-        $this->defaultParams = $config->getDefaultParams();
-        $this->requestUrl = $config->getRequestUrl();
-        $this->requestOptions = $config->getRequestOptions();
+        $this->config = $config;
     }
 
-    /**
-     * To avoid direct calls to the client are
-     * @return Client
-     */
-    protected function getClient(): Client
+    protected function getClient(): ClientInterface
     {
         if (!$this->client) {
-            $this->client = new Client(
-                array_merge(
-                    $this->defaultParams,
-                    $this->requestOptions
-                )
-            );
+            $this->client = new Client($this->config->prepareConfig());
         }
+
         return $this->client;
-    }
-
-    /**
-     * Base64 encoded serialized array of custom field values
-     * @link https://developers.whmcs.com/api-reference/addorder/
-     * @link http://mahmudulruet.blogspot.com/2011/10/adding-and-posting-custom-field-values.html
-     *
-     * 1. Login to your WHMCS admin panel.
-     * 2. Navigate Setup->Client Custom Fields
-     * 3. If there is no custom fields yet create a new one; say named "VAT".
-     * 4. After creating the field, see the HTML source from the page by right clicking on page and click view source (in Firefox).
-     * 5. Find the text "VAT".
-     * 6. You will find something like this line of HTML code (<input type="text" size="30" value="VAT" name="fieldname[11]">)
-     * 7. This fieldname[] with id may vary by users admin panel. So track the id from fieldname[11] and yes it's 11. If you find something like <input type="text" size="30" value="VAT" name="fieldname[xx]"> then 'xx' will be the id you have to use in your $customfields array. The array now should look like:
-     *
-     *      $customfields = [
-     *          "11" => "123456",
-     *          "12" => "678945"
-     *      ];
-     *      $postfields["customfields"] = base64_encode(serialize($customfields));
-     *
-     * Preprocessing the request params.
-     * Main purpose of the method is to encode `customfields` param.
-     *
-     * @param  string  $action  method name
-     * @param  array  $params  query params
-     * @param  bool  $skipValidation  cancel validation of the required fields
-     *
-     * @return array
-     */
-    protected function filterParams(string $action, array $params, bool $skipValidation): array
-    {
-        if ($skipValidation) {
-            $params['skipvalidation'] = true;
-        }
-        $params['action'] = $action;
-        $result = array_merge($this->defaultParams, $params);
-
-        if (!empty($result['customfields'])) {
-            $result['customfields'] = base64_encode(serialize($result['customfields']));
-        }
-        return [
-            'form_params' => $result
-        ];
-    }
-
-    /**
-     * Get servers. In addition tries to fetch status. Void
-     *
-     * @throws RuntimeException
-     */
-    public function validate(): void
-    {
-        $response = $this->call('GetServers', ['fetchStatus' => true]);
-
-        if (!$response || $response['result'] !== 'success') {
-            throw new RuntimeException('Server is done!', 500);
-        }
     }
 
     /**
@@ -146,16 +56,14 @@ final class Connector
     {
         try {
             $response = $this->getClient()->post(
-                $this->whmcsUri,
-                $this->filterParams(
-                    $action,
-                    $params,
-                    $skipValidation
-                )
+                $this->config->getRequestUrl(),
+                $this->config->prepareRequestOptions($action, $params, $skipValidation)
             );
-
             if ($response->getStatusCode() !== 200) {
-                throw new RuntimeException('Code not 200: '.$response->getReasonPhrase(), $response->getStatusCode());
+                throw new RuntimeException(
+                    "Error: Status {$response->getStatusCode()}, reason: {$response->getReasonPhrase()}",
+                    $response->getStatusCode()
+                );
             }
 
             return json_decode(
@@ -181,7 +89,11 @@ final class Connector
     public static function connect(ConfigInterface $config): Connector
     {
         $self = new self($config);
-        $self->validate();
+
+        /**
+         * Validate the connection
+         */
+        $self->call('GetClientGroups');
 
         return $self;
     }

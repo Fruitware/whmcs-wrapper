@@ -5,19 +5,19 @@ namespace Fruitware\WhmcsWrapper;
 use Fruitware\WhmcsWrapper\Config\DefaultConfig;
 use Fruitware\WhmcsWrapper\Connect\Connector;
 use Fruitware\WhmcsWrapper\Exception\RuntimeException;
+use GuzzleHttp\Exception\ClientException;
 
 /**
- * @property Connector|null connector
+ * @package Fruitware\WhmcsWrapper
+ * @author   Fruits Foundation <foundation@fruits.agency>
  *
- * @todo split Facade from the Connector and encapsulate it to avoid external call (expect the special “expert” flow)
- * @todo apply pattern Facede for real
+ * @link https://developers.whmcs.com/api/
  *
  * Class Facade
- * @package Fruitware\WhmcsWrapper
+ * @property Connector|null connector
  */
 class Facade
 {
-    private static ?Facade $obj;
     protected ?Connector $connector;
 
     /**
@@ -25,7 +25,7 @@ class Facade
      *
      * @throws RuntimeException
      */
-    protected function getConnector(): Connector
+    protected function connector(): Connector
     {
         if (!$this->connector) {
             throw new RuntimeException('You should call `connect` method first and pass the connection data');
@@ -35,34 +35,69 @@ class Facade
 
     /**
      * Damn simple connect method:
-     * ```Facade::i()->call
-     * This method works with static cached version of the Connector
      *
-     * @param  string  $uri
-     * @param  string  $apiId
-     * @param  string  $apiSecret
+     *     $whmscClient = Facade::run()->connect(<whmcs home url>, <identifier>, <secret>);
+     *     $whmscClient->call('GetHealthStatus');
      *
-     * @param  array|null  $params
-     * @param  array|null  $options
-     * @return Connector
+     * OR since method is chained to Facade is can be a one-liner:,
      *
-     * @throws Exception\RuntimeException
+     *     Facade::run()->connect(<whmcs home url>, <identifier>, <secret>)->call('GetHealthStatus');
+     *
+     * “Authenticating With API Credentials” method is the only available right now
+     * @link https://developers.whmcs.com/api/authentication/
+     *
+     * @param  string  $uri  path to your WHMCS installation (HTTP_ROOT)
+     * @param  string  $key  WHMCS Identifier
+     * @param  string  $secret  WHMCS Identifier's Secret key
+     * @param  array|string[]  $params  `form_fields` that will be used for each API-call e.g. 'responsetype' => 'json'
+     * @param  array  $config  Request options to apply. See \GuzzleHttp\RequestOptions
+     * @return Facade
+     *
+     * @throws RuntimeException
      */
     public function connect(
         string $uri,
-        string $apiId,
-        string $apiSecret,
-        array $params = null,
-        array $options = null
+        string $key,
+        string $secret,
+        array $params = [],
+        array $config = []
+    ): Facade {
+        $this->connector = self::getConnector($uri, $key, $secret, $params, $config);
+
+        return $this;
+    }
+
+
+    /**
+     * Direct access to the connector object
+     *
+     * “Authenticating With API Credentials” method is the only available right now
+     * @link https://developers.whmcs.com/api/authentication/
+     *
+     * @param  string  $uri  path to your WHMCS installation (HTTP_ROOT)
+     * @param  string  $key  WHMCS Identifier
+     * @param  string  $secret  WHMCS Identifier's Secret key
+     * @param  array|string[]  $params  `form_fields` that will be used for each API-call e.g. 'responsetype' => 'json'
+     * @param  array  $config  Request options to apply. See \GuzzleHttp\RequestOptions
+     * @return Connector
+     *
+     * @throws RuntimeException
+     */
+    public static function getConnector(
+        string $uri,
+        string $key,
+        string $secret,
+        array $params = [],
+        array $config = []
     ): ?Connector {
 
-        $config = DefaultConfig::i(
+        return Connector::connect(DefaultConfig::i(
             $uri,
-            $apiId,
-            $apiSecret
-        )->updateDefaultParams($params)->updateRequestOptions($options);
-
-        return $this->connector = Connector::connect($config);
+            $key,
+            $secret,
+            $params,
+            $config
+        ));
     }
 
 
@@ -72,27 +107,28 @@ class Facade
      */
     final public static function run(): Facade
     {
-        if (!self::$obj) {
-            self::$obj = new self();
+        static $self;
+        if (!$self) {
+            $self = new self();
         }
-        return self::$obj;
+        return $self;
     }
 
     /**
+     * Suitable for any API-call
+     *
+     * @link https://developers.whmcs.com/api/api-index/
+     *
      * @param  string  $action
-     * @param  array  $attributes
+     * @param  array  $params
      * @param  bool  $skipValidation
      *
      * @return array|null
      *
-     * @throws Exception\RuntimeException
+     * @throws RuntimeException|ClientException
      */
-    final public function call(
-        string $action,
-        array $attributes = [],
-        bool $skipValidation = false
-    ): ?array {
-        return self::run()->getConnector()->call($action, $attributes, $skipValidation);
-
+    final public function call(string $action, array $params = [], bool $skipValidation = false): ?array
+    {
+        return self::run()->connector()->call($action, $params, $skipValidation);
     }
 }
