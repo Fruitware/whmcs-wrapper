@@ -3,107 +3,83 @@
 namespace Fruitware\WhmcsWrapper\Config;
 
 /**
- * @todo End uo with the configuration architecture
  * @package Fruitware\WhmcsWrapper
+ * @author   Fruits Foundation <foundation@fruits.agency>
  */
 interface ConfigInterface
 {
     /**
-     * Constructor expected to be protected but omitted to comply
-     *
      * ConfigInterface constructor.
+     * Protected to disable instancing but static i() method
+     *
+     *
      * @param  string  $apiBaseUri
-     * @param  string  $apiIdentifier
-     * @param  string  $apiSecret
+     * @param  string  $key
+     * @param  string  $secret
      * @param  array  $postDefaultParams
-     * @param  array  $requestOptions
+     * @param  array  $clientOptions
      */
     public function __construct(
         string $apiBaseUri,
-        string $apiIdentifier,
-        string $apiSecret,
+        string $key,
+        string $secret,
         array $postDefaultParams,
-        array $requestOptions
+        array $clientOptions
     );
 
     /**
-     * Singleton config initialization
-     *
-     * @link https://developers.whmcs.com/api/authentication/
-     *
      * @param  string  $baseUri  path to your WHMCS installation (HTTP_ROOT)
-     *
      * @param  string  $identifier  WHMCS Identifier
      * @param  string  $secret  WHMCS Identifier's Secret key
-     *
-     * Members are used as `form_fields` for each API-call as POST-request
      * @param  array|string[]  $defaultConfig  default: array['responsetype' => 'json']
+     * @param  array  $clientOptions  Request options to apply. See \GuzzleHttp\RequestOptions
      *
-     * @param  array  $requestOptions  Request options to apply. See \GuzzleHttp\RequestOptions
      * @return ConfigInterface
      */
     public static function i(
         string $baseUri,
         string $identifier,
         string $secret,
-        array $defaultConfig = ['responsetype' => 'json'],
-        array $requestOptions = ['timeout' => 3.0]
+        array $defaultConfig = [],
+        array $clientOptions = []
     ):
     ConfigInterface;
 
-    /**
-     * Transmitting securely default form_field POST-params to the Connector
-     *
-     * @return array
-     */
-    public function getDefaultParams(): array;
-
-    /**
-     * Transmitting securely API POST request url
-     *
-     * @return string
-     */
     public function getRequestUrl(): string;
 
     /**
-     * Transmitting given authorization `identifier` to configure http-client
-     *
-     * @return string
+     * GuzzleHttp\ClientInterface client's config (used during initialization)
+     * @return array
      */
-    public function getAuthIdentifier(): string;
+    public function prepareConfig(): array;
 
     /**
-     * Transmitting `base_uri` value to configure http-client
+     * Base64 encoded serialized array of custom field values
+     * @link https://developers.whmcs.com/api-reference/addorder/
+     * @link http://mahmudulruet.blogspot.com/2011/10/adding-and-posting-custom-field-values.html
      *
-     * @return string
-     */
-    public function getBaseUri(): string;
-
-    /**
-     * Transmitting given authorization `secret` to configure http-client
+     * 1. Login to your WHMCS admin panel.
+     * 2. Navigate Setup->Client Custom Fields
+     * 3. If there is no custom fields yet create a new one; say named "VAT".
+     * 4. After creating the field, see the HTML source from the page by right clicking on page and click view source (in Firefox).
+     * 5. Find the text "VAT".
+     * 6. You will find something like this line of HTML code (<input type="text" size="30" value="VAT" name="fieldname[11]">)
+     * 7. This fieldname[] with id may vary by users admin panel. So track the id from fieldname[11] and yes it's 11. If you find something like <input type="text" size="30" value="VAT" name="fieldname[xx]"> then 'xx' will be the id you have to use in your $customfields array. The array now should look like:
      *
-     * @return string
-     */
-    public function getAuthSecret(): string;
-
-    /**
-     * Setting default http-client options
+     *      $customfields = [
+     *          "11" => "123456",
+     *          "12" => "678945"
+     *      ];
+     *      $postfields["customfields"] = base64_encode(serialize($customfields));
+     *
+     * Preprocessing the request params.
+     * Main purpose of the method is to encode `customfields` param.
+     *
+     * @param  string  $action  method name
+     * @param  array  $params  query params
+     * @param  bool  $skipValidation  cancel validation of the required fields
      *
      * @return array
      */
-    public function getRequestOptions(): array;
-
-
-    /**
-     * @param  array  $params
-     * @return ConfigInterface
-     */
-    public function updateDefaultParams(array $params = []): ConfigInterface;
-
-
-    /**
-     * @param  array  $options
-     * @return ConfigInterface
-     */
-    public function updateRequestOptions(array $options = []): ConfigInterface;
+    public function prepareRequestOptions(string $action, array $params, bool $skipValidation): array;
 }
