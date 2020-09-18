@@ -13,15 +13,15 @@ use function rtrim;
  */
 final class DefaultConfig implements ConfigInterface
 {
-    protected string $apiRequestUrl = '/includes/api.php';
-    protected string $key;
-    protected string $secret;
+    protected $apiRequestUrl = '/includes/api.php';
+    protected $key;
+    protected $secret;
 
-    protected array $postDefaultParams = [
+    protected $postDefaultParams = [
         'responsetype' => 'json'
     ];
 
-    protected array $clientOptions = [
+    protected $clientOptions = [
         'base_uri' => '',
     ];
 
