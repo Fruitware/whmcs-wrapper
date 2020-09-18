@@ -31,13 +31,22 @@ final class Connector
         $this->config = $config;
     }
 
-    protected function getClient(): ClientInterface
+    /**
+     * @param  ConfigInterface  $config
+     * @return Connector
+     *
+     * @throws RuntimeException
+     */
+    public static function connect(ConfigInterface $config): Connector
     {
-        if (!$this->client) {
-            $this->client = new Client($this->config->prepareConfig());
-        }
+        $self = new self($config);
 
-        return $this->client;
+        /**
+         * Validate the connection
+         */
+        $self->call('GetClientGroups');
+
+        return $self;
     }
 
     /**
@@ -70,7 +79,7 @@ final class Connector
                 $response->getBody()->getContents(),
                 true,
                 512,
-                JSON_THROW_ON_ERROR | JSON_THROW_ON_ERROR
+                JSON_THROW_ON_ERROR
             );
         } catch (AggregateException $e) {
             throw new RuntimeException('GuzzleException:'.$e->getMessage(), $e->getCode());
@@ -80,21 +89,12 @@ final class Connector
         }
     }
 
-    /**
-     * @param  ConfigInterface  $config
-     * @return Connector
-     *
-     * @throws RuntimeException
-     */
-    public static function connect(ConfigInterface $config): Connector
+    protected function getClient(): ClientInterface
     {
-        $self = new self($config);
+        if (!$this->client) {
+            $this->client = new Client($this->config->prepareConfig());
+        }
 
-        /**
-         * Validate the connection
-         */
-        $self->call('GetClientGroups');
-
-        return $self;
+        return $this->client;
     }
 }
