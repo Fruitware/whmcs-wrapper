@@ -18,7 +18,7 @@ use GuzzleHttp\Exception\ClientException;
  */
 class Facade
 {
-    protected ?Connector $connector;
+    protected $connector;
 
     /**
      * @return Connector
