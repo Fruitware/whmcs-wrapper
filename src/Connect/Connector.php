@@ -19,12 +19,12 @@ final class Connector
      * WHMCS API wrapper
      * @var ClientInterface|null
      */
-    protected ?ClientInterface $client = null;
+    protected $client = null;
 
     /**
      * @var ConfigInterface|null
      */
-    protected ?ConfigInterface $config;
+    protected $config;
 
     protected function __construct(ConfigInterface $config)
     {
