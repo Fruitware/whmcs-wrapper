@@ -1,4 +1,4 @@
-<h1 align="center">Welcome to whmcs-wrapper 👋</h1>
+<h1>Welcome to whmcs-wrapper 👋</h1>
 <p>
   <img alt="Version" src="https://img.shields.io/badge/version-0.1-blue.svg?cacheSeconds=2592000" />
   <a href="https://github.com/Fruitware/whmcs-wrapper/wiki" target="_blank">
@@ -39,6 +39,6 @@ Copyright © 2020 [Fruits Foundation](https://github.com/Fruitware).<br />
 This project is [LGPL--2.1--or--later](https://github.com/Fruitware/whmcs-wrapper/blob/master/LICENSE) licensed.
 
 ***
-_This README was generated with ❤️ by [readme-md-generator](https://github.com/kefranabg/readme-md-generator)_
+_This README nailed with ❤️ by [readme-md-generator](https://github.com/kefranabg/readme-md-generator)_
 
 ![PHP Composer](https://github.com/Fruitware/whmcs-wrapper/workflows/PHP%20Composer/badge.svg?branch=master)
